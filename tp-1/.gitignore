@@ -5,3 +5,4 @@ __pycache__/
 backend/data/*.db
 backend/storage/images/*
 !backend/storage/images/.gitkeep
+backend/source/
