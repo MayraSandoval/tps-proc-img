@@ -32,3 +32,5 @@ trabajo del equipo es implementar esas clases y lograr que pasen todos.
 ## Integrantes
 
 - _completar_
+## Ikemiya, Facundo
+## Aldana Sandoval, Betzabe Mayra
