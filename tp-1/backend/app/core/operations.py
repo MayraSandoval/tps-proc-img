@@ -9,13 +9,14 @@ TODO (teams): implement the ten operations. Each one validates its domain rules
 in the constructor (raising `InvalidParameters`) and implements `apply`.
 The constructor arguments match the fields of the schemas in `app/schemas.py`.
 """
-
+import cv2 # 7
+import numpy as np # 7
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar
 
-from PIL import Image, ImageEnhance, ImageOps, ImageFilter  # agregado para el 1 brillo Enhance 2,3,4,5,6
+from PIL import Image, ImageEnhance, ImageOps, ImageFilter  # agregado para el 1 brillo Enhance 2,3,4,5,6,7
 
-from app.core.exceptions import NotImplementedFeature, InvalidParameters # para 6 
+from app.core.exceptions import NotImplementedFeature, InvalidParameters # para 6 ,7
 
 
 class Operation(ABC):
@@ -155,11 +156,25 @@ class Edges(Operation):
 
     def __init__(self, lower_threshold: int = 100, upper_threshold: int = 200) -> None:
         # TODO: domain rule, lower_threshold < upper_threshold.
+        #super().__init__(lower_threshold=lower_threshold, upper_threshold=upper_threshold)
+        # Validación de regla de dominio: lower_threshold debe ser menor que upper_threshold
+        if lower_threshold >= upper_threshold:
+            raise InvalidParameters("lower_threshold must be strictly less than upper_threshold.")
+
         super().__init__(lower_threshold=lower_threshold, upper_threshold=upper_threshold)
+        self.lower_threshold = lower_threshold
+        self.upper_threshold = upper_threshold
 
     def apply(self, image: Image.Image) -> Image.Image:
-        raise NotImplementedFeature("Edge detection")
+        #raise NotImplementedFeature("Edge detection")
+        # Convertir a escala de grises primero para Canny
+        gray_image = image.convert("L")
+        np_image = np.array(gray_image)
 
+        # Aplicar el detector de bordes de Canny
+        edges = cv2.Canny(np_image, self.lower_threshold, self.upper_threshold)
+
+        return Image.fromarray(edges)
 
 class Rotation(Operation):
     name = "rotation"
