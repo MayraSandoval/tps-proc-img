@@ -78,10 +78,12 @@ class Contrast(Operation):
 
     def __init__(self, factor: float = 1.0) -> None:
         super().__init__(factor=factor)
+        self.factor = factor #para guardar los parametros
 
     def apply(self, image: Image.Image) -> Image.Image:
-        raise NotImplementedFeature("Contrast")
-
+        #raise NotImplementedFeature("Contrast")
+        enhancer = ImageEnhance.Contrast(image)
+        return enhancer.enhance(self.factor)
 
 class Saturation(Operation):
     name = "saturation"
