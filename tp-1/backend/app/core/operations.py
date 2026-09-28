@@ -13,7 +13,7 @@ The constructor arguments match the fields of the schemas in `app/schemas.py`.
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar
 
-from PIL import Image
+from PIL import Image, ImageEnhance # agregado para el brillo Enhance
 
 from app.core.exceptions import NotImplementedFeature
 
@@ -67,8 +67,10 @@ class Brightness(Operation):
         self.factor = factor
 
     def apply(self, image: Image.Image) -> Image.Image:
-        factor = self.factor  # the value received in the JSON body, e.g. 1.5
-        raise NotImplementedFeature("Brightness")
+        """factor = self.factor  # the value received in the JSON body, e.g. 1.5
+        raise NotImplementedFeature("Brightness")"""
+        enhancer = ImageEnhance.Brightness(image) #Podés verificarlo en la terminal ejecutando los tests específicos de esta operación: pytest -k brightness
+        return enhancer.enhance(self.factor)
 
 
 class Contrast(Operation):
