@@ -181,10 +181,12 @@ class Rotation(Operation):
 
     def __init__(self, angle: float = 90.0, expand: bool = True) -> None:
         super().__init__(angle=angle, expand=expand)
+        self.angle = angle
+        self.expand = expand
 
     def apply(self, image: Image.Image) -> Image.Image:
-        raise NotImplementedFeature("Rotation")
-
+        #raise NotImplementedFeature("Rotation")
+        return image.rotate(self.angle, expand=self.expand, resample=Image.Resampling.BICUBIC)
 
 class Mirror(Operation):
     name = "mirror"
