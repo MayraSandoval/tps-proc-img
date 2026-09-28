@@ -102,10 +102,12 @@ class Sharpness(Operation):
 
     def __init__(self, factor: float = 1.0) -> None:
         super().__init__(factor=factor)
-
+        self.factor = factor
+        
     def apply(self, image: Image.Image) -> Image.Image:
-        raise NotImplementedFeature("Sharpness")
-
+        #raise NotImplementedFeature("Sharpness")
+        enhancer = ImageEnhance.Sharpness(image)
+        return enhancer.enhance(self.factor)
 
 class Grayscale(Operation):
     name = "grayscale"
