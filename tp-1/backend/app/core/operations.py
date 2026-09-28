@@ -13,7 +13,7 @@ The constructor arguments match the fields of the schemas in `app/schemas.py`.
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar
 
-from PIL import Image, ImageEnhance # agregado para el brillo Enhance
+from PIL import Image, ImageEnhance, ImageOps # agregado para el brillo Enhance
 
 from app.core.exceptions import NotImplementedFeature
 
@@ -116,7 +116,10 @@ class Grayscale(Operation):
         super().__init__()
 
     def apply(self, image: Image.Image) -> Image.Image:
-        raise NotImplementedFeature("Grayscale")
+        #raise NotImplementedFeature("Grayscale")
+        if image.mode == "L":
+            return image
+        return ImageOps.grayscale(image)
 
 
 class Blur(Operation):
