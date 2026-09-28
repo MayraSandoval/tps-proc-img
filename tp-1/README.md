@@ -7,7 +7,7 @@ La consigna completa está en [`enunciado.html`](enunciado.html) (abrilo en el n
 ```bash
 cd backend
 python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
+source .venv/bin/activate        # Windows: 1- "cd backend" 2- ".venv\Scripts\activate"
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8765
 ```
