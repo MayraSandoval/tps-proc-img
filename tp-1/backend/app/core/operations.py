@@ -212,7 +212,36 @@ class Resize(Operation):
 
     def __init__(self, width: int, height: int | None = None, keep_aspect_ratio: bool = True) -> None:
         # TODO: domain rule, height is required if keep_aspect_ratio is false.
+        #super().__init__(width=width, height=height, keep_aspect_ratio=keep_aspect_ratio)
+        # Validación de regla de dominio: height es obligatorio si keep_aspect_ratio es False
+        if not keep_aspect_ratio and height is None:
+            raise InvalidParameters("Height is required when keep_aspect_ratio is False.")
+
         super().__init__(width=width, height=height, keep_aspect_ratio=keep_aspect_ratio)
+        self.width = width
+        self.height = height
+        self.keep_aspect_ratio = keep_aspect_ratio
 
     def apply(self, image: Image.Image) -> Image.Image:
-        raise NotImplementedFeature("Resize")
+        #raise NotImplementedFeature("Resize")
+        orig_w, orig_h = image.size
+
+        if self.keep_aspect_ratio:
+            if self.height is None:
+                # Calcular altura manteniendo la proporción del nuevo ancho
+                new_h = round(orig_h * (self.width / orig_w))
+                new_w = self.width
+            else:
+                # Si ambos vienen dados, redimensionar proporcionalmente para que quepa dentro de la caja (bounding box)
+                ratio = min(self.width / orig_w, self.height / orig_h)
+                new_w = round(orig_w * ratio)
+                new_h = round(orig_h * ratio)
+        else:
+            new_w = self.width
+            new_h = self.height
+
+        # Evitar dimensiones menores a 1 píxel
+        new_w = max(1, new_w)
+        new_h = max(1, new_h)
+
+        return image.resize((new_w, new_h), resample=Image.Resampling.LANCZOS)
