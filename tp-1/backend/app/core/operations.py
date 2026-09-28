@@ -82,7 +82,7 @@ class Contrast(Operation):
 
     def apply(self, image: Image.Image) -> Image.Image:
         #raise NotImplementedFeature("Contrast")
-        enhancer = ImageEnhance.Contrast(image)
+        enhancer = ImageEnhance.Contrast(image) #pytest -k contrast
         return enhancer.enhance(self.factor)
 
 class Saturation(Operation):
@@ -90,10 +90,12 @@ class Saturation(Operation):
 
     def __init__(self, factor: float = 1.0) -> None:
         super().__init__(factor=factor)
+        self.factor = factor
 
     def apply(self, image: Image.Image) -> Image.Image:
-        raise NotImplementedFeature("Saturation")
-
+        #raise NotImplementedFeature("Saturation")
+        enhancer = ImageEnhance.Color(image)
+        return enhancer.enhance(self.factor)
 
 class Sharpness(Operation):
     name = "sharpness"
