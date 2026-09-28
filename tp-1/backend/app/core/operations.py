@@ -192,10 +192,19 @@ class Mirror(Operation):
     name = "mirror"
 
     def __init__(self, direction: str = "horizontal") -> None:
-        super().__init__(direction=direction)
+        #super().__init__(direction=direction)
+        direction_normalized = direction.lower()
+        if direction_normalized not in ("horizontal", "vertical"):
+            raise InvalidParameters(f"Invalid direction '{direction}'. Must be 'horizontal' or 'vertical'.")
+
+        super().__init__(direction=direction_normalized)
+        self.direction = direction_normalized
 
     def apply(self, image: Image.Image) -> Image.Image:
-        raise NotImplementedFeature("Mirror")
+        #raise NotImplementedFeature("Mirror")
+        if self.direction == "horizontal":
+            return image.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+        return image.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
 
 
 class Resize(Operation):
