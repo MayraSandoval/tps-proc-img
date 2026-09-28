@@ -13,9 +13,9 @@ The constructor arguments match the fields of the schemas in `app/schemas.py`.
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar
 
-from PIL import Image, ImageEnhance, ImageOps # agregado para el brillo Enhance
+from PIL import Image, ImageEnhance, ImageOps, ImageFilter  # agregado para el 1 brillo Enhance 2,3,4,5,6
 
-from app.core.exceptions import NotImplementedFeature
+from app.core.exceptions import NotImplementedFeature, InvalidParameters # para 6 
 
 
 class Operation(ABC):
@@ -127,10 +127,27 @@ class Blur(Operation):
 
     def __init__(self, method: str = "gaussian", kernel_size: int = 5) -> None:
         # TODO: domain rule, kernel_size must be odd.
+        #super().__init__(method=method, kernel_size=kernel_size)
+        if kernel_size % 2 == 0:
+            raise InvalidParameters("El tamaño del kernel debe ser impar.")
+
         super().__init__(method=method, kernel_size=kernel_size)
+        self.method = method.lower()
+        self.kernel_size = kernel_size
 
     def apply(self, image: Image.Image) -> Image.Image:
-        raise NotImplementedFeature("Blur")
+        #raise NotImplementedFeature("Blur")
+        # El radio para BoxBlur / GaussianBlur equivale a la distancia del centro al borde
+        radius = (self.kernel_size - 1) / 2
+
+        if self.method == "gaussian":
+            return image.filter(ImageFilter.GaussianBlur(radius=radius))
+        elif self.method in ("average", "box"):
+            return image.filter(ImageFilter.BoxBlur(radius=radius))
+        elif self.method == "median":
+            return image.filter(ImageFilter.MedianFilter(size=self.kernel_size))
+        else:
+            raise InvalidParameters(f"Método de desenfoque desconocido: {self.method}")
 
 
 class Edges(Operation):
