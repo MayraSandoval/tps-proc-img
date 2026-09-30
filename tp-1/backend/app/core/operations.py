@@ -9,6 +9,7 @@ TODO (teams): implement the ten operations. Each one validates its domain rules
 in the constructor (raising `InvalidParameters`) and implements `apply`.
 The constructor arguments match the fields of the schemas in `app/schemas.py`.
 """
+
 import cv2 # 7
 import numpy as np # 7
 from abc import ABC, abstractmethod
@@ -98,6 +99,7 @@ class Saturation(Operation):
         enhancer = ImageEnhance.Color(image)
         return enhancer.enhance(self.factor)
 
+
 class Sharpness(Operation):
     name = "sharpness"
 
@@ -170,6 +172,14 @@ class Edges(Operation):
         # Convertir a escala de grises primero para Canny
         gray_image = image.convert("L")
         np_image = np.array(gray_image)
+
+
+
+        # Aplicar el detector de bordes de Canny
+        edges = cv2.Canny(np_image, self.lower_threshold, self.upper_threshold)
+
+        return Image.fromarray(edges)
+
 
         # Aplicar el detector de bordes de Canny
         edges = cv2.Canny(np_image, self.lower_threshold, self.upper_threshold)
