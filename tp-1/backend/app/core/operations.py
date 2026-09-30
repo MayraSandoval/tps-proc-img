@@ -10,12 +10,14 @@ in the constructor (raising `InvalidParameters`) and implements `apply`.
 The constructor arguments match the fields of the schemas in `app/schemas.py`.
 """
 
+import cv2 # 7
+import numpy as np # 7
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar
 
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageOps, ImageFilter  # agregado para el 1 brillo Enhance 2,3,4,5,6,7
 
-from app.core.exceptions import NotImplementedFeature
+from app.core.exceptions import NotImplementedFeature, InvalidParameters # para 6 ,7
 
 
 class Operation(ABC):
@@ -67,8 +69,10 @@ class Brightness(Operation):
         self.factor = factor
 
     def apply(self, image: Image.Image) -> Image.Image:
-        factor = self.factor  # the value received in the JSON body, e.g. 1.5
-        raise NotImplementedFeature("Brightness")
+        """factor = self.factor  # the value received in the JSON body, e.g. 1.5
+        raise NotImplementedFeature("Brightness")"""
+        enhancer = ImageEnhance.Brightness(image) #Podés verificarlo en la terminal ejecutando los tests específicos de esta operación: pytest -k brightness
+        return enhancer.enhance(self.factor)
 
 
 class Contrast(Operation):
@@ -76,19 +80,24 @@ class Contrast(Operation):
 
     def __init__(self, factor: float = 1.0) -> None:
         super().__init__(factor=factor)
+        self.factor = factor #para guardar los parametros
 
     def apply(self, image: Image.Image) -> Image.Image:
-        raise NotImplementedFeature("Contrast")
-
+        #raise NotImplementedFeature("Contrast")
+        enhancer = ImageEnhance.Contrast(image) #pytest -k contrast
+        return enhancer.enhance(self.factor)
 
 class Saturation(Operation):
     name = "saturation"
 
     def __init__(self, factor: float = 1.0) -> None:
         super().__init__(factor=factor)
+        self.factor = factor
 
     def apply(self, image: Image.Image) -> Image.Image:
-        raise NotImplementedFeature("Saturation")
+        #raise NotImplementedFeature("Saturation")
+        enhancer = ImageEnhance.Color(image)
+        return enhancer.enhance(self.factor)
 
 
 class Sharpness(Operation):
