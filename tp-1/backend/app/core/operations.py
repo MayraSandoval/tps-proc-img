@@ -9,13 +9,14 @@ TODO (teams): implement the ten operations. Each one validates its domain rules
 in the constructor (raising `InvalidParameters`) and implements `apply`.
 The constructor arguments match the fields of the schemas in `app/schemas.py`.
 """
-
+import cv2 # 7
+import numpy as np # 7
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar
 
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageOps, ImageFilter  # agregado para el 1 brillo Enhance 2,3,4,5,6,7
 
-from app.core.exceptions import NotImplementedFeature
+from app.core.exceptions import NotImplementedFeature, InvalidParameters # para 6 ,7
 
 
 class Operation(ABC):
@@ -67,8 +68,10 @@ class Brightness(Operation):
         self.factor = factor
 
     def apply(self, image: Image.Image) -> Image.Image:
-        factor = self.factor  # the value received in the JSON body, e.g. 1.5
-        raise NotImplementedFeature("Brightness")
+        """factor = self.factor  # the value received in the JSON body, e.g. 1.5
+        raise NotImplementedFeature("Brightness")"""
+        enhancer = ImageEnhance.Brightness(image) #Podés verificarlo en la terminal ejecutando los tests específicos de esta operación: pytest -k brightness
+        return enhancer.enhance(self.factor)
 
 
 class Contrast(Operation):
@@ -76,30 +79,36 @@ class Contrast(Operation):
 
     def __init__(self, factor: float = 1.0) -> None:
         super().__init__(factor=factor)
+        self.factor = factor #para guardar los parametros
 
     def apply(self, image: Image.Image) -> Image.Image:
-        raise NotImplementedFeature("Contrast")
-
+        #raise NotImplementedFeature("Contrast")
+        enhancer = ImageEnhance.Contrast(image) #pytest -k contrast
+        return enhancer.enhance(self.factor)
 
 class Saturation(Operation):
     name = "saturation"
 
     def __init__(self, factor: float = 1.0) -> None:
         super().__init__(factor=factor)
+        self.factor = factor
 
     def apply(self, image: Image.Image) -> Image.Image:
-        raise NotImplementedFeature("Saturation")
-
+        #raise NotImplementedFeature("Saturation")
+        enhancer = ImageEnhance.Color(image)
+        return enhancer.enhance(self.factor)
 
 class Sharpness(Operation):
     name = "sharpness"
 
     def __init__(self, factor: float = 1.0) -> None:
         super().__init__(factor=factor)
-
+        self.factor = factor
+        
     def apply(self, image: Image.Image) -> Image.Image:
-        raise NotImplementedFeature("Sharpness")
-
+        #raise NotImplementedFeature("Sharpness")
+        enhancer = ImageEnhance.Sharpness(image)
+        return enhancer.enhance(self.factor)
 
 class Grayscale(Operation):
     name = "grayscale"
@@ -108,7 +117,10 @@ class Grayscale(Operation):
         super().__init__()
 
     def apply(self, image: Image.Image) -> Image.Image:
-        raise NotImplementedFeature("Grayscale")
+        #raise NotImplementedFeature("Grayscale")
+        if image.mode == "L":
+            return image
+        return ImageOps.grayscale(image)
 
 
 class Blur(Operation):
@@ -116,10 +128,27 @@ class Blur(Operation):
 
     def __init__(self, method: str = "gaussian", kernel_size: int = 5) -> None:
         # TODO: domain rule, kernel_size must be odd.
+        #super().__init__(method=method, kernel_size=kernel_size)
+        if kernel_size % 2 == 0:
+            raise InvalidParameters("El tamaño del kernel debe ser impar.")
+
         super().__init__(method=method, kernel_size=kernel_size)
+        self.method = method.lower()
+        self.kernel_size = kernel_size
 
     def apply(self, image: Image.Image) -> Image.Image:
-        raise NotImplementedFeature("Blur")
+        #raise NotImplementedFeature("Blur")
+        # El radio para BoxBlur / GaussianBlur equivale a la distancia del centro al borde
+        radius = (self.kernel_size - 1) / 2
+
+        if self.method == "gaussian":
+            return image.filter(ImageFilter.GaussianBlur(radius=radius))
+        elif self.method in ("average", "box"):
+            return image.filter(ImageFilter.BoxBlur(radius=radius))
+        elif self.method == "median":
+            return image.filter(ImageFilter.MedianFilter(size=self.kernel_size))
+        else:
+            raise InvalidParameters(f"Método de desenfoque desconocido: {self.method}")
 
 
 class Edges(Operation):
@@ -127,30 +156,55 @@ class Edges(Operation):
 
     def __init__(self, lower_threshold: int = 100, upper_threshold: int = 200) -> None:
         # TODO: domain rule, lower_threshold < upper_threshold.
+        #super().__init__(lower_threshold=lower_threshold, upper_threshold=upper_threshold)
+        # Validación de regla de dominio: lower_threshold debe ser menor que upper_threshold
+        if lower_threshold >= upper_threshold:
+            raise InvalidParameters("lower_threshold must be strictly less than upper_threshold.")
+
         super().__init__(lower_threshold=lower_threshold, upper_threshold=upper_threshold)
+        self.lower_threshold = lower_threshold
+        self.upper_threshold = upper_threshold
 
     def apply(self, image: Image.Image) -> Image.Image:
-        raise NotImplementedFeature("Edge detection")
+        #raise NotImplementedFeature("Edge detection")
+        # Convertir a escala de grises primero para Canny
+        gray_image = image.convert("L")
+        np_image = np.array(gray_image)
 
+        # Aplicar el detector de bordes de Canny
+        edges = cv2.Canny(np_image, self.lower_threshold, self.upper_threshold)
+
+        return Image.fromarray(edges)
 
 class Rotation(Operation):
     name = "rotation"
 
     def __init__(self, angle: float = 90.0, expand: bool = True) -> None:
         super().__init__(angle=angle, expand=expand)
+        self.angle = angle
+        self.expand = expand
 
     def apply(self, image: Image.Image) -> Image.Image:
-        raise NotImplementedFeature("Rotation")
-
+        #raise NotImplementedFeature("Rotation")
+        return image.rotate(self.angle, expand=self.expand, resample=Image.Resampling.BICUBIC)
 
 class Mirror(Operation):
     name = "mirror"
 
     def __init__(self, direction: str = "horizontal") -> None:
-        super().__init__(direction=direction)
+        #super().__init__(direction=direction)
+        direction_normalized = direction.lower()
+        if direction_normalized not in ("horizontal", "vertical"):
+            raise InvalidParameters(f"Invalid direction '{direction}'. Must be 'horizontal' or 'vertical'.")
+
+        super().__init__(direction=direction_normalized)
+        self.direction = direction_normalized
 
     def apply(self, image: Image.Image) -> Image.Image:
-        raise NotImplementedFeature("Mirror")
+        #raise NotImplementedFeature("Mirror")
+        if self.direction == "horizontal":
+            return image.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+        return image.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
 
 
 class Resize(Operation):
@@ -158,7 +212,36 @@ class Resize(Operation):
 
     def __init__(self, width: int, height: int | None = None, keep_aspect_ratio: bool = True) -> None:
         # TODO: domain rule, height is required if keep_aspect_ratio is false.
+        #super().__init__(width=width, height=height, keep_aspect_ratio=keep_aspect_ratio)
+        # Validación de regla de dominio: height es obligatorio si keep_aspect_ratio es False
+        if not keep_aspect_ratio and height is None:
+            raise InvalidParameters("Height is required when keep_aspect_ratio is False.")
+
         super().__init__(width=width, height=height, keep_aspect_ratio=keep_aspect_ratio)
+        self.width = width
+        self.height = height
+        self.keep_aspect_ratio = keep_aspect_ratio
 
     def apply(self, image: Image.Image) -> Image.Image:
-        raise NotImplementedFeature("Resize")
+        #raise NotImplementedFeature("Resize")
+        orig_w, orig_h = image.size
+
+        if self.keep_aspect_ratio:
+            if self.height is None:
+                # Calcular altura manteniendo la proporción del nuevo ancho
+                new_h = round(orig_h * (self.width / orig_w))
+                new_w = self.width
+            else:
+                # Si ambos vienen dados, redimensionar proporcionalmente para que quepa dentro de la caja (bounding box)
+                ratio = min(self.width / orig_w, self.height / orig_h)
+                new_w = round(orig_w * ratio)
+                new_h = round(orig_h * ratio)
+        else:
+            new_w = self.width
+            new_h = self.height
+
+        # Evitar dimensiones menores a 1 píxel
+        new_w = max(1, new_w)
+        new_h = max(1, new_h)
+
+        return image.resize((new_w, new_h), resample=Image.Resampling.LANCZOS)
